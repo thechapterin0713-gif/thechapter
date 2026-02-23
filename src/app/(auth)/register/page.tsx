@@ -2,24 +2,55 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { signUp, signIn } from "@/lib/auth-client";
 
 export default function RegisterPage() {
+  const router = useRouter();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (password !== confirmPassword) {
-      alert("비밀번호가 일치하지 않습니다.");
+      setError("비밀번호가 일치하지 않습니다.");
       return;
     }
     setIsLoading(true);
-    // TODO: Better Auth 회원가입 처리
-    setIsLoading(false);
+    setError("");
+
+    const { error } = await signUp.email({
+      email,
+      password,
+      name,
+    });
+
+    if (error) {
+      setError(error.message || "회원가입에 실패했습니다.");
+      setIsLoading(false);
+      return;
+    }
+
+    router.push("/dashboard");
+  };
+
+  const handleGoogleLogin = async () => {
+    await signIn.social({
+      provider: "google",
+      callbackURL: "/dashboard",
+    });
+  };
+
+  const handleKakaoLogin = async () => {
+    await signIn.social({
+      provider: "kakao",
+      callbackURL: "/dashboard",
+    });
   };
 
   return (
@@ -32,9 +63,18 @@ export default function RegisterPage() {
           무료로 시작하고 인적성 합격에 한 걸음 다가가세요
         </p>
 
+        {error && (
+          <div className="mt-4 p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-600">
+            {error}
+          </div>
+        )}
+
         {/* 소셜 가입 */}
         <div className="mt-8 space-y-3">
-          <button className="w-full flex items-center justify-center gap-3 h-11 rounded-xl border border-slate-300 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors">
+          <button
+            onClick={handleGoogleLogin}
+            className="w-full flex items-center justify-center gap-3 h-11 rounded-xl border border-slate-300 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+          >
             <svg className="w-5 h-5" viewBox="0 0 24 24">
               <path
                 d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"
@@ -55,7 +95,10 @@ export default function RegisterPage() {
             </svg>
             Google로 가입하기
           </button>
-          <button className="w-full flex items-center justify-center gap-3 h-11 rounded-xl bg-[#FEE500] text-sm font-medium text-[#3C1E1E] hover:bg-[#FDD835] transition-colors">
+          <button
+            onClick={handleKakaoLogin}
+            className="w-full flex items-center justify-center gap-3 h-11 rounded-xl bg-[#FEE500] text-sm font-medium text-[#3C1E1E] hover:bg-[#FDD835] transition-colors"
+          >
             <svg className="w-5 h-5" viewBox="0 0 24 24" fill="#3C1E1E">
               <path d="M12 3C6.477 3 2 6.463 2 10.691c0 2.726 1.8 5.117 4.508 6.473-.163.612-.593 2.22-.68 2.564-.108.427.157.421.33.307.136-.09 2.162-1.467 3.042-2.063.584.087 1.183.131 1.8.131 5.523 0 10-3.463 10-7.412C22 6.463 17.523 3 12 3z" />
             </svg>

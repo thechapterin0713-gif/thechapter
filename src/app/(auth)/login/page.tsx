@@ -2,18 +2,48 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { signIn } from "@/lib/auth-client";
 
 export default function LoginPage() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    // TODO: Better Auth 로그인 처리
-    setIsLoading(false);
+    setError("");
+
+    const { error } = await signIn.email({
+      email,
+      password,
+    });
+
+    if (error) {
+      setError(error.message || "로그인에 실패했습니다. 이메일과 비밀번호를 확인해주세요.");
+      setIsLoading(false);
+      return;
+    }
+
+    router.push("/dashboard");
+  };
+
+  const handleGoogleLogin = async () => {
+    await signIn.social({
+      provider: "google",
+      callbackURL: "/dashboard",
+    });
+  };
+
+  const handleKakaoLogin = async () => {
+    await signIn.social({
+      provider: "kakao",
+      callbackURL: "/dashboard",
+    });
   };
 
   return (
@@ -26,9 +56,18 @@ export default function LoginPage() {
           더챕터에 오신 것을 환영합니다
         </p>
 
+        {error && (
+          <div className="mt-4 p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-600">
+            {error}
+          </div>
+        )}
+
         {/* 소셜 로그인 */}
         <div className="mt-8 space-y-3">
-          <button className="w-full flex items-center justify-center gap-3 h-11 rounded-xl border border-slate-300 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors">
+          <button
+            onClick={handleGoogleLogin}
+            className="w-full flex items-center justify-center gap-3 h-11 rounded-xl border border-slate-300 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+          >
             <svg className="w-5 h-5" viewBox="0 0 24 24">
               <path
                 d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"
@@ -49,7 +88,10 @@ export default function LoginPage() {
             </svg>
             Google로 계속하기
           </button>
-          <button className="w-full flex items-center justify-center gap-3 h-11 rounded-xl bg-[#FEE500] text-sm font-medium text-[#3C1E1E] hover:bg-[#FDD835] transition-colors">
+          <button
+            onClick={handleKakaoLogin}
+            className="w-full flex items-center justify-center gap-3 h-11 rounded-xl bg-[#FEE500] text-sm font-medium text-[#3C1E1E] hover:bg-[#FDD835] transition-colors"
+          >
             <svg className="w-5 h-5" viewBox="0 0 24 24" fill="#3C1E1E">
               <path d="M12 3C6.477 3 2 6.463 2 10.691c0 2.726 1.8 5.117 4.508 6.473-.163.612-.593 2.22-.68 2.564-.108.427.157.421.33.307.136-.09 2.162-1.467 3.042-2.063.584.087 1.183.131 1.8.131 5.523 0 10-3.463 10-7.412C22 6.463 17.523 3 12 3z" />
             </svg>
